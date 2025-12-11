@@ -4,243 +4,202 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Warga Tungkal Ilir</title>
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .bg-gradient-primary { background: linear-gradient(135deg, #0d6efd 0%, #0043a8 100%); }
-        .card { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
-        .table thead th { background-color: #f8f9fa; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; }
-        .avatar-initial { width: 35px; height: 35px; background-color: #e9ecef; color: #495057; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; }
-        .badge-gender-l { background-color: #e7f1ff; color: #0d6efd; }
-        .badge-gender-p { background-color: #fce8e6; color: #dc3545; }
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .hero-header { background: linear-gradient(135deg, #0061f2 0%, #00ba88 100%); color: white; padding: 2rem 0; margin-bottom: 2rem; border-radius: 0 0 20px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .card { border: none; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .avatar { width: 40px; height: 40px; background-color: #e9ecef; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #495057; }
+        .table-hover tbody tr:hover { background-color: #f1f8ff; }
+        .badge-desa { background-color: #e3f2fd; color: #0d47a1; border: 1px solid #bbdefb; }
         
         /* Loading Overlay */
-        #loadingOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.9); z-index: 9999;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-        }
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
     <!-- Loading Screen -->
-    <div id="loadingOverlay">
+    <div id="loading">
         <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
-        <h5 class="mt-3 text-muted">Memuat 15.000+ Data Warga...</h5>
+        <h5 class="mt-3 text-secondary">Memuat Data Warga...</h5>
+        <small class="text-danger mt-2" id="errorMsg" style="display:none;">
+            Gagal memuat 'data_warga.js'.<br>Pastikan file tersebut ada di folder yang sama dengan file ini.
+        </small>
     </div>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-gradient-primary shadow-sm sticky-top">
+    <!-- Header -->
+    <div class="hero-header text-center">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="#">
-                <i class="bi bi-people-fill me-2"></i>SI-WARGA TUNGKAL ILIR
-            </a>
-            <button class="btn btn-light btn-sm text-primary fw-bold" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasFilter">
-                <i class="bi bi-funnel-fill"></i> Filter Data
-            </button>
+            <h2 class="fw-bold"><i class="bi bi-people-fill me-2"></i>Data Warga Tungkal Ilir</h2>
+            <p class="mb-0 opacity-75">Pencarian Data Kependudukan Terintegrasi</p>
         </div>
-    </nav>
+    </div>
 
-    <!-- Main Content -->
-    <div class="container py-4">
-        
-        <!-- Stats Cards -->
+    <div class="container pb-5">
+        <!-- Statistik -->
         <div class="row g-3 mb-4">
             <div class="col-md-4">
-                <div class="card p-3 d-flex flex-row align-items-center">
-                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
-                        <i class="bi bi-person-vcard text-primary fs-4"></i>
-                    </div>
-                    <div>
-                        <h6 class="text-muted mb-0">Total Data</h6>
-                        <h3 class="fw-bold mb-0" id="statTotal">0</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-3 d-flex flex-row align-items-center">
-                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
-                        <i class="bi bi-geo-alt text-success fs-4"></i>
-                    </div>
-                    <div>
-                        <h6 class="text-muted mb-0">Total Desa</h6>
-                        <h3 class="fw-bold mb-0" id="statDesa">0</h3>
+                <div class="card stat-card p-3 h-100">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                            <i class="bi bi-person-lines-fill text-primary fs-4"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted text-uppercase fw-bold">Total Warga</small>
+                            <h3 class="fw-bold mb-0" id="totalWarga">0</h3>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card p-3 d-flex flex-row align-items-center">
-                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
-                        <i class="bi bi-search text-warning fs-4"></i>
+                <div class="card stat-card p-3 h-100">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-success bg-opacity-10 p-3 rounded-circle me-3">
+                            <i class="bi bi-map-fill text-success fs-4"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted text-uppercase fw-bold">Total Desa</small>
+                            <h3 class="fw-bold mb-0" id="totalDesa">0</h3>
+                        </div>
                     </div>
-                    <div>
-                        <h6 class="text-muted mb-0">Hasil Pencarian</h6>
-                        <h3 class="fw-bold mb-0" id="statFilter">0</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stat-card p-3 h-100">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-warning bg-opacity-10 p-3 rounded-circle me-3">
+                            <i class="bi bi-search text-warning fs-4"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted text-uppercase fw-bold">Hasil Filter</small>
+                            <h3 class="fw-bold mb-0" id="totalFilter">0</h3>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Search Bar & Table -->
-        <div class="card">
-            <div class="card-header bg-white py-3 border-bottom-0">
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
-                    <input type="text" id="searchInput" class="form-control border-start-0 bg-light" placeholder="Cari nama warga...">
+        <!-- Filter & Search -->
+        <div class="card p-4 mb-4">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold small text-muted">Desa</label>
+                    <select id="filterDesa" class="form-select bg-light border-0" onchange="applyFilter()">
+                        <option value="">Semua Desa</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label fw-bold small text-muted">Cari Nama</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
+                        <input type="text" id="filterNama" class="form-control bg-light border-0" placeholder="Ketik nama warga..." onkeyup="applyFilter()">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold small text-muted">RT</label>
+                    <input type="text" id="filterRT" class="form-control bg-light border-0" placeholder="001" onkeyup="applyFilter()">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold small text-muted">RW</label>
+                    <input type="text" id="filterRW" class="form-control bg-light border-0" placeholder="002" onkeyup="applyFilter()">
                 </div>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-4">Nama Lengkap</th>
-                                <th>L/P</th>
-                                <th>Desa</th>
-                                <th>RT / RW</th>
-                                <th>Alamat</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody">
-                            <!-- Data will be injected here -->
-                        </tbody>
-                    </table>
-                </div>
+        </div>
+
+        <!-- Tabel Data -->
+        <div class="card overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4 py-3">Nama Lengkap</th>
+                            <th>L/P</th>
+                            <th>Desa</th>
+                            <th>RT / RW</th>
+                            <th>Alamat Detail</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Data akan muncul disini -->
+                    </tbody>
+                </table>
             </div>
-            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
-                <small class="text-muted" id="pageInfo">Menampilkan 0 - 0 dari 0</small>
-                <nav>
-                    <ul class="pagination pagination-sm mb-0">
-                        <li class="page-item"><button class="page-link" onclick="prevPage()">Sebelumnya</button></li>
-                        <li class="page-item"><button class="page-link" onclick="nextPage()">Selanjutnya</button></li>
-                    </ul>
-                </nav>
+            <!-- Pagination -->
+            <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                <small class="text-muted" id="pageInfo">Menampilkan 0 data</small>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="prevPage()"><i class="bi bi-chevron-left"></i></button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="nextPage()"><i class="bi bi-chevron-right"></i></button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Offcanvas Filter Sidebar -->
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasFilter" aria-labelledby="offcanvasFilterLabel">
-        <div class="offcanvas-header bg-light">
-            <h5 class="offcanvas-title fw-bold" id="offcanvasFilterLabel"><i class="bi bi-sliders me-2"></i>Filter Lanjutan</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
-        <div class="offcanvas-body">
-            <div class="mb-4">
-                <label class="form-label fw-semibold">Pilih Desa</label>
-                <select id="filterDesa" class="form-select">
-                    <option value="">Semua Desa</option>
-                </select>
-            </div>
-            <div class="row g-2 mb-4">
-                <div class="col-6">
-                    <label class="form-label fw-semibold">RT</label>
-                    <input type="text" id="filterRT" class="form-control" placeholder="001">
-                </div>
-                <div class="col-6">
-                    <label class="form-label fw-semibold">RW</label>
-                    <input type="text" id="filterRW" class="form-control" placeholder="002">
-                </div>
-            </div>
-            <div class="mb-4">
-                <label class="form-label fw-semibold">Jenis Kelamin</label>
-                <select id="filterJK" class="form-select">
-                    <option value="">Semua</option>
-                    <option value="L">Laki-laki</option>
-                    <option value="P">Perempuan</option>
-                </select>
-            </div>
-            <div class="d-grid gap-2">
-                <button class="btn btn-primary" onclick="applyFilters()">Terapkan Filter</button>
-                <button class="btn btn-outline-secondary" onclick="resetFilters()">Reset</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap JS Bundle -->
+    <!-- SCRIPT DATA (WAJIB ADA FILE data_warga.js DI FOLDER SAMA) -->
+    <script src="data_warga.js" onerror="showError()"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
-        // --- Variables ---
+        // Variabel Global
         let allData = [];
         let filteredData = [];
         let currentPage = 1;
-        const rowsPerPage = 20;
+        const perPage = 20;
 
-        // --- Fetch JSON ---
-        async function loadData() {
-            try {
-                // Pastikan file json ada di folder yang sama
-                const response = await fetch('data_warga_tungkal_ilir.json');
-                if (!response.ok) throw new Error("Gagal mengambil file JSON");
-                
-                allData = await response.json();
-                
-                // Urutkan data berdasarkan Desa lalu Nama
-                allData.sort((a, b) => a.desa.localeCompare(b.desa) || a.nama.localeCompare(b.nama));
-                
-                filteredData = [...allData];
-                
-                populateDesaDropdown();
-                updateStats();
-                renderTable();
-                
-                // Hide Loading
-                document.getElementById('loadingOverlay').style.opacity = '0';
-                setTimeout(() => {
-                    document.getElementById('loadingOverlay').style.display = 'none';
-                }, 500);
+        function showError() {
+            document.getElementById('errorMsg').style.display = 'block';
+            document.querySelector('.spinner-border').style.display = 'none';
+            document.querySelector('#loading h5').innerText = "Gagal Memuat Data";
+        }
 
-            } catch (error) {
-                alert("Error: Pastikan file 'data_warga_tungkal_ilir.json' ada di folder yang sama. Pesan: " + error.message);
+        // Dijalankan saat halaman selesai dimuat
+        window.onload = function() {
+            // Cek apakah data dari file .js sudah masuk
+            if (typeof dbWarga === 'undefined') {
+                showError();
+                return;
             }
-        }
 
-        // --- Logic Functions ---
+            allData = dbWarga;
+            filteredData = [...allData];
 
-        function populateDesaDropdown() {
-            const desaSet = new Set(allData.map(item => item.desa));
-            const select = document.getElementById('filterDesa');
-            desaSet.forEach(desa => {
-                const option = document.createElement('option');
-                option.value = desa;
-                option.text = desa;
-                select.appendChild(option);
+            // Isi Dropdown Desa
+            const uniqueDesa = [...new Set(allData.map(item => item.desa))].sort();
+            const selectDesa = document.getElementById('filterDesa');
+            uniqueDesa.forEach(desa => {
+                const opt = document.createElement('option');
+                opt.value = desa;
+                opt.textContent = desa;
+                selectDesa.appendChild(opt);
             });
-        }
 
-        function updateStats() {
-            document.getElementById('statTotal').innerText = allData.length.toLocaleString();
+            // Update Statistik Awal
+            document.getElementById('totalWarga').textContent = allData.length.toLocaleString();
+            document.getElementById('totalDesa').textContent = uniqueDesa.length;
+
+            applyFilter(); // Render awal
             
-            const desaCount = new Set(allData.map(item => item.desa)).size;
-            document.getElementById('statDesa').innerText = desaCount;
+            // Hilangkan Loading
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+            }, 500);
+        };
 
-            document.getElementById('statFilter').innerText = filteredData.length.toLocaleString();
-        }
-
-        function filterDataLogic() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
+        function applyFilter() {
+            const fNama = document.getElementById('filterNama').value.toLowerCase();
             const fDesa = document.getElementById('filterDesa').value;
             const fRT = document.getElementById('filterRT').value;
             const fRW = document.getElementById('filterRW').value;
-            const fJK = document.getElementById('filterJK').value;
 
             filteredData = allData.filter(row => {
-                // Search Logic (Name)
-                const matchName = row.nama.toLowerCase().includes(search);
-
-                // Filter Logic
                 const matchDesa = fDesa === "" || row.desa === fDesa;
-                const matchJK = fJK === "" || row.jk === fJK;
-
-                // RT/RW loose matching (so '1' matches '001')
+                const matchNama = row.nama.toLowerCase().includes(fNama);
+                
+                // Smart Search RT/RW (001 == 1)
                 const cleanRT = row.rt.replace(/^0+/, '');
                 const searchRT = fRT.replace(/^0+/, '');
                 const matchRT = fRT === "" || row.rt.includes(fRT) || cleanRT === searchRT;
@@ -249,11 +208,11 @@
                 const searchRW = fRW.replace(/^0+/, '');
                 const matchRW = fRW === "" || row.rw.includes(fRW) || cleanRW === searchRW;
 
-                return matchName && matchDesa && matchRT && matchRW && matchJK;
+                return matchDesa && matchNama && matchRT && matchRW;
             });
 
-            currentPage = 1; // Reset to page 1
-            updateStats();
+            document.getElementById('totalFilter').textContent = filteredData.length.toLocaleString();
+            currentPage = 1;
             renderTable();
         }
 
@@ -262,90 +221,51 @@
             tbody.innerHTML = "";
 
             if (filteredData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">Tidak ada data ditemukan</td></tr>`;
-                document.getElementById('pageInfo').innerText = `0 - 0 dari 0`;
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted fw-bold">Data tidak ditemukan</td></tr>`;
+                document.getElementById('pageInfo').textContent = "0 - 0 dari 0";
                 return;
             }
 
-            // Pagination Logic
-            const start = (currentPage - 1) * rowsPerPage;
-            const end = start + rowsPerPage;
-            const paginatedItems = filteredData.slice(start, end);
+            const start = (currentPage - 1) * perPage;
+            const end = start + perPage;
+            const pageData = filteredData.slice(start, end);
 
-            paginatedItems.forEach(item => {
+            pageData.forEach(item => {
                 const initial = item.nama.charAt(0).toUpperCase();
-                let genderBadge = item.jk === 'L' 
-                    ? `<span class="badge badge-gender-l rounded-pill"><i class="bi bi-gender-male"></i> L</span>`
-                    : (item.jk === 'P' ? `<span class="badge badge-gender-p rounded-pill"><i class="bi bi-gender-female"></i> P</span>` : '-');
+                const genderBadge = item.jk === 'L' 
+                    ? '<span class="badge bg-primary bg-opacity-10 text-primary">L</span>' 
+                    : (item.jk === 'P' ? '<span class="badge bg-danger bg-opacity-10 text-danger">P</span>' : '-');
 
                 const row = `
                     <tr>
                         <td class="ps-4">
                             <div class="d-flex align-items-center">
-                                <div class="avatar-initial me-3">${initial}</div>
-                                <div>
-                                    <div class="fw-bold text-dark">${item.nama}</div>
-                                </div>
+                                <div class="avatar me-3">${initial}</div>
+                                <div class="fw-bold text-dark">${item.nama}</div>
                             </div>
                         </td>
                         <td>${genderBadge}</td>
-                        <td><span class="badge bg-secondary bg-opacity-25 text-dark border">${item.desa}</span></td>
+                        <td><span class="badge badge-desa rounded-pill px-3">${item.desa}</span></td>
                         <td>
                             <div class="small text-muted">RT: ${item.rt || '-'}</div>
                             <div class="small text-muted">RW: ${item.rw || '-'}</div>
                         </td>
-                        <td class="text-muted small">${item.alamat}</td>
+                        <td class="small text-muted">${item.alamat}</td>
                     </tr>
                 `;
                 tbody.insertAdjacentHTML('beforeend', row);
             });
 
-            // Update Info Pagination
-            document.getElementById('pageInfo').innerText = 
-                `Menampilkan ${start + 1} - ${Math.min(end, filteredData.length)} dari ${filteredData.length.toLocaleString()} data`;
+            document.getElementById('pageInfo').textContent = 
+                `Menampilkan ${start + 1} - ${Math.min(end, filteredData.length)} dari ${filteredData.length.toLocaleString()}`;
         }
 
-        // --- Event Listeners ---
-
-        function applyFilters() {
-            filterDataLogic();
-            // Close Offcanvas programmatically (optional)
-            const offcanvasEl = document.getElementById('offcanvasFilter');
-            const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
-            offcanvas.hide();
+        function prevPage() {
+            if (currentPage > 1) { currentPage--; renderTable(); }
         }
-
-        function resetFilters() {
-            document.getElementById('filterDesa').value = "";
-            document.getElementById('filterRT').value = "";
-            document.getElementById('filterRW').value = "";
-            document.getElementById('filterJK').value = "";
-            filterDataLogic();
+        function nextPage() {
+            if (currentPage * perPage < filteredData.length) { currentPage++; renderTable(); }
         }
-
-        // Real-time search on typing name
-        document.getElementById('searchInput').addEventListener('keyup', () => {
-            filterDataLogic();
-        });
-
-        // Pagination Buttons
-        window.prevPage = function() {
-            if (currentPage > 1) {
-                currentPage--;
-                renderTable();
-            }
-        }
-
-        window.nextPage = function() {
-            if ((currentPage * rowsPerPage) < filteredData.length) {
-                currentPage++;
-                renderTable();
-            }
-        }
-
-        // Initialize
-        loadData();
-
     </script>
 </body>
 </html>
