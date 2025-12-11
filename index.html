@@ -3,42 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cari Data Warga Tungkal Ilir</title>
+    <title>Data Warga Tungkal Ilir</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        body { background-color: #f8f9fa; padding-top: 50px; }
-        .container { max-width: 800px; }
-        .loading { display: none; }
-        .card { margin-top: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        body { background-color: #f0f2f5; padding-top: 20px; }
+        .container { max-width: 1000px; }
+        .card { border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-radius: 10px; }
+        .table-responsive { border-radius: 8px; overflow: hidden; background: white; }
+        .spinner-border { width: 3rem; height: 3rem; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2 class="text-center mb-4">Pencarian Data Warga Tungkal Ilir</h2>
+<div class="container mb-5">
+    <h3 class="text-center mb-4 text-primary fw-bold">Data Warga Tungkal Ilir</h3>
     
-    <div class="card p-4">
-        <div class="input-group mb-3">
-            <input type="text" id="searchInput" class="form-control" placeholder="Masukkan nama warga..." onkeypress="handleEnter(event)">
-            <button class="btn btn-primary" onclick="searchData()">Cari</button>
+    <div class="card p-4 mb-4">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label fw-bold small text-muted">PILIH DESA</label>
+                <select id="filterDesa" class="form-select bg-light" onchange="searchData()">
+                    <option value="">-- Pilih Desa --</option>
+                    </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label fw-bold small text-muted">RT</label>
+                <input type="text" id="filterRT" class="form-control" placeholder="Semua RT" onkeypress="handleEnter(event)">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold small text-muted">RW</label>
+                <input type="text" id="filterRW" class="form-control" placeholder="Semua RW" onkeypress="handleEnter(event)">
+            </div>
+
+             <div class="col-md-4">
+                <label class="form-label fw-bold small text-muted">NAMA (OPSIONAL)</label>
+                <input type="text" id="filterNama" class="form-control" placeholder="Cari nama spesifik..." onkeypress="handleEnter(event)">
+            </div>
+            
+            <div class="col-12 text-end mt-3">
+                <button class="btn btn-primary px-4" onclick="searchData()">
+                    <i class="bi bi-search"></i> Tampilkan Data
+                </button>
+            </div>
         </div>
-        <small class="text-muted">Mencari data dari 10 desa/dusun secara otomatis.</small>
     </div>
 
-    <div id="loading" class="text-center mt-3 loading">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <p>Sedang memproses data...</p>
+    <div id="loading" class="text-center my-5" style="display:none;">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Sedang memuat data...</p>
     </div>
 
-    <div id="resultsArea" class="mt-4">
+    <div id="resultsArea">
+        <div class="alert alert-info text-center">
+            Silakan pilih <strong>Desa</strong> untuk menampilkan data warga secara otomatis.<br>
+            Atau gunakan filter RT/RW untuk hasil yang lebih spesifik.
         </div>
+    </div>
 </div>
 
 <script>
-    // Daftar file CSV yang Anda miliki
+    // Daftar File
     const fileList = [
         "Data warga masyarakat Tungkal Ilir .xlsx - Bentayan.csv",
         "Data warga masyarakat Tungkal Ilir .xlsx - Teluk Tenggulang.csv",
@@ -52,17 +78,45 @@
         "Data warga masyarakat Tungkal Ilir .xlsx - KARANG MULYA.csv"
     ];
 
-    function handleEnter(e) {
-        if(e.key === 'Enter') searchData();
+    // Helper: Ambil nama desa dari nama file
+    function getVillageName(fileName) {
+        return fileName.replace("Data warga masyarakat Tungkal Ilir .xlsx - ", "").replace(".csv", "");
+    }
+
+    // Isi Dropdown Desa saat Load
+    window.onload = function() {
+        const select = document.getElementById('filterDesa');
+        fileList.forEach(file => {
+            const village = getVillageName(file);
+            const option = document.createElement('option');
+            option.value = village;
+            option.text = village;
+            select.appendChild(option);
+        });
+    };
+
+    function handleEnter(e) { if(e.key === 'Enter') searchData(); }
+
+    // Helper: Ambil nilai kolom dengan toleransi nama header berbeda
+    function getColumnValue(row, possibleNames) {
+        for (let name of possibleNames) {
+            if (row[name] !== undefined) return row[name];
+        }
+        return "";
     }
 
     async function searchData() {
-        const query = document.getElementById('searchInput').value.toLowerCase();
+        const fNama = document.getElementById('filterNama').value.toLowerCase().trim();
+        const fDesa = document.getElementById('filterDesa').value; 
+        const fRT = document.getElementById('filterRT').value.trim();
+        const fRW = document.getElementById('filterRW').value.trim();
+        
         const resultsArea = document.getElementById('resultsArea');
         const loading = document.getElementById('loading');
 
-        if (!query) {
-            alert("Harap masukkan nama!");
+        // PENCEGAHAN: Jangan cari jika semua kosong (menghindari load semua data sekaligus)
+        if (!fNama && !fDesa && !fRT && !fRW) {
+            resultsArea.innerHTML = `<div class="alert alert-warning text-center">Silakan pilih Desa atau isi salah satu filter terlebih dahulu.</div>`;
             return;
         }
 
@@ -70,14 +124,16 @@
         loading.style.display = "block";
 
         let allResults = [];
-        let filesProcessed = 0;
+        // Batas maksimal tampilan agar browser tidak berat jika data ribuan
+        const MAX_DISPLAY = 2000; 
 
-        // Loop untuk memproses setiap file
         for (const fileName of fileList) {
-            try {
-                // Mengambil nama desa dari nama file agar lebih rapi
-                const villageName = fileName.replace("Data warga masyarakat Tungkal Ilir .xlsx - ", "").replace(".csv", "");
+            const currentVillage = getVillageName(fileName);
 
+            // Jika user memilih desa tertentu, skip file lain
+            if (fDesa && fDesa !== currentVillage) continue;
+
+            try {
                 await new Promise((resolve) => {
                     Papa.parse(fileName, {
                         download: true,
@@ -86,78 +142,104 @@
                         complete: function(results) {
                             const data = results.data;
                             
-                            // Filter data berdasarkan nama
                             const filtered = data.filter(row => {
-                                // Cek variasi nama kolom (karena tiap file beda header)
-                                const name = row['NAMA_LGKP'] || row['NAMA_LENGKAP'] || row['Nama'] || row['NAMA_LENGKAP'] || "";
-                                return name.toLowerCase().includes(query);
+                                // Logika: Jika filter kosong, anggap cocok (return true)
+                                
+                                // 1. Filter Nama
+                                const nameVal = getColumnValue(row, ['NAMA_LGKP', 'NAMA_LENGKAP', 'Nama', 'nama']);
+                                const matchName = fNama === "" || nameVal.toLowerCase().includes(fNama);
+
+                                // 2. Filter RT (Toleransi "001" == "1")
+                                let rtVal = getColumnValue(row, ['RT', 'NO_RT', 'rt', 'No_RT']);
+                                const cleanRTRow = rtVal.replace(/^0+/, ''); 
+                                const cleanRTSearch = fRT.replace(/^0+/, '');
+                                const matchRT = fRT === "" || rtVal.includes(fRT) || cleanRTRow === cleanRTSearch;
+
+                                // 3. Filter RW
+                                let rwVal = getColumnValue(row, ['RW', 'NO_RW', 'rw', 'No_RW']);
+                                const cleanRWRow = rwVal.replace(/^0+/, '');
+                                const cleanRWSearch = fRW.replace(/^0+/, '');
+                                const matchRW = fRW === "" || rwVal.includes(fRW) || cleanRWRow === cleanRWSearch;
+
+                                return matchName && matchRT && matchRW;
                             });
 
-                            // Tambahkan nama desa ke hasil
                             filtered.forEach(item => {
-                                item.SOURCE_VILLAGE = villageName;
+                                item.SOURCE_VILLAGE = currentVillage;
                                 allResults.push(item);
                             });
                             resolve();
                         },
-                        error: function() {
-                            console.log("Gagal memuat " + fileName);
-                            resolve(); // Tetap lanjut meski error
-                        }
+                        error: function() { resolve(); }
                     });
                 });
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         loading.style.display = "none";
-        displayResults(allResults);
+        displayResults(allResults, MAX_DISPLAY);
     }
 
-    function displayResults(data) {
+    function displayResults(data, limit) {
         const resultsArea = document.getElementById('resultsArea');
         
         if (data.length === 0) {
-            resultsArea.innerHTML = `<div class="alert alert-warning">Data tidak ditemukan.</div>`;
+            resultsArea.innerHTML = `<div class="alert alert-danger text-center">Data tidak ditemukan sesuai filter tersebut.</div>`;
             return;
         }
 
-        let html = `<div class="table-responsive"><table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>Nama Lengkap</th>
-                    <th>L/P</th>
-                    <th>Alamat / Dusun</th>
-                    <th>Desa (Asal File)</th>
-                </tr>
-            </thead>
-            <tbody>`;
+        // Tampilkan peringatan jika data terlalu banyak
+        let warningMsg = "";
+        if (data.length > limit) {
+            warningMsg = `<div class="alert alert-warning">Hasil terlalu banyak (${data.length} data). Menampilkan ${limit} data pertama. Harap spesifikkan pencarian.</div>`;
+            data = data.slice(0, limit);
+        }
 
-        data.forEach(row => {
-            // Normalisasi data kolom untuk ditampilkan
-            const name = row['NAMA_LGKP'] || row['NAMA_LENGKAP'] || row['Nama'] || "-";
-            
-            // Cek variasi kolom Gender
-            let gender = row['JENIS_KLMIN_KET'] || row['JENIS_KLMIN'] || row['L/P'] || row['JENIS KELAMIN'] || "-";
-            // Bersihkan format gender jika perlu
-            if(gender === '1') gender = "Lk";
-            if(gender === '2') gender = "Pr";
+        let html = `
+        ${warningMsg}
+        <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="text-success m-0">Ditemukan: ${data.length} Data</h5>
+                <small class="text-muted">Diurutkan berdasarkan Desa</small>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-striped table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>No</th>
+                            <th>Nama Lengkap</th>
+                            <th>L/P</th>
+                            <th>Desa</th>
+                            <th>RT</th>
+                            <th>RW</th>
+                            <th>Alamat</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
 
-            // Cek variasi kolom Alamat
-            const address = row['ALAMAT'] || row['DUSUN'] || row['Alamat'] || "-";
+        data.forEach((row, index) => {
+            const name = getColumnValue(row, ['NAMA_LGKP', 'NAMA_LENGKAP', 'Nama', 'nama']) || "-";
+            let gender = getColumnValue(row, ['JENIS_KLMIN_KET', 'JENIS_KLMIN', 'L/P', 'JENIS KELAMIN']) || "-";
+            if(gender == '1') gender = "L";
+            if(gender == '2') gender = "P";
+
+            const rt = getColumnValue(row, ['RT', 'NO_RT', 'rt', 'No_RT']) || "-";
+            const rw = getColumnValue(row, ['RW', 'NO_RW', 'rw', 'No_RW']) || "-";
+            const address = getColumnValue(row, ['ALAMAT', 'DUSUN', 'Alamat']) || "-";
             const village = row['SOURCE_VILLAGE'];
 
             html += `<tr>
-                <td><strong>${name}</strong></td>
+                <td>${index + 1}</td>
+                <td class="fw-bold">${name}</td>
                 <td>${gender}</td>
-                <td>${address}</td>
-                <td>${village}</td>
+                <td><span class="badge bg-info text-dark">${village}</span></td>
+                <td>${rt}</td>
+                <td>${rw}</td>
+                <td class="small text-muted">${address}</td>
             </tr>`;
         });
 
-        html += `</tbody></table></div>`;
-        html += `<p class="text-end text-muted">Ditemukan ${data.length} data.</p>`;
+        html += `</tbody></table></div></div>`;
         resultsArea.innerHTML = html;
     }
 </script>
